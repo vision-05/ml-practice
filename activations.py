@@ -7,7 +7,7 @@ class Activation:
     def forward(self, Z):
         pass
 
-    def backward(self, dA, Z):
+    def backward(self, dA, Z, **kwargs):
         pass
 
 class Linear(Activation):
@@ -34,10 +34,14 @@ class Linear(Activation):
 
         return np.dot(self.weights, inputs) + self.biases
     
-    def backward(self, dZ):
+    def backward(self, dZ, **kwargs):
         m = self.A_prev.shape[1]
 
-        self.dW = np.dot(dZ, self.A_prev.T)/m
+        lambd = kwargs.get("lambd", 0.0)
+
+        L2_grad = lambd*self.weights/m
+
+        self.dW = np.dot(dZ, self.A_prev.T)/m + L2_grad
         self.dB = np.sum(dZ, axis=1, keepdims=True)/m
 
         new_grad = np.dot(self.weights.T, dZ)
@@ -54,7 +58,7 @@ class ReLU(Activation):
     def predict(self, Z):
         return np.maximum(0,Z)
 
-    def backward(self, dZ):
+    def backward(self, dZ, **kwargs):
         new_grad = dZ*(self.Z>0)
         return new_grad
     
@@ -69,7 +73,7 @@ class LeakyReLU(Activation):
     def predict(self, Z):
         return np.maximum(Z*0.01, Z)
     
-    def backward(self, dZ):
+    def backward(self, dZ, **kwargs):
         new_grad = dZ*(self.Z > 0) + dZ*(self.Z<=0)*0.01
         return new_grad
 
@@ -84,7 +88,7 @@ class sigmoid(Activation):
     def predict(self, Z):
         return 1/(1+np.exp(-Z))
 
-    def backward(self, dZ):
+    def backward(self, dZ, **kwargs):
         s = sigmoid(self.Z)
         return dZ*s*(1-s)
 
@@ -105,5 +109,5 @@ class softmax(Activation):
         denominator = np.sum(expZ, axis=0, keepdims=True)
         return expZ/denominator
 
-    def backward(self, dZ):
+    def backward(self, dZ, **kwargs):
         pass

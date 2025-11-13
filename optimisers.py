@@ -16,7 +16,7 @@ class SGD(Optimiser):
     def __init__(self):
         super().__init__()
 
-    def run(self, X, Y, batch_size, m, learning_rate, model_obj):
+    def run(self, X, Y, batch_size, m, learning_rate, lambd, model_obj):
         
         epoch_cost = 0
         permutation = np.random.permutation(m)
@@ -31,7 +31,7 @@ class SGD(Optimiser):
             batch_Y = Y_shuffled[:,batch_size*j:batch_size*(j+1)]
             batch_Y_pred = model_obj.forward(batch_X)
 
-            cost = model_obj.cost_fn.compute_cost(batch_Y_pred, batch_Y)
+            cost = model_obj.cost_fn.compute_cost(batch_Y_pred, batch_Y, model_obj.fns, lambd)
             epoch_cost += cost
 
             model_obj.backward(batch_Y_pred, batch_Y)
@@ -56,7 +56,7 @@ class Momentum(EWMA):
                 self.V[f"dW{i}"] = np.zeros_like(fn.weights)
                 self.V[f"dB{i}"] = np.zeros_like(fn.biases)
 
-    def run(self, X, Y, batch_size, m, learning_rate, model_obj):
+    def run(self, X, Y, batch_size, m, learning_rate, lambd, model_obj):
         epoch_cost = 0
         permutation = np.random.permutation(m)
 
@@ -69,7 +69,7 @@ class Momentum(EWMA):
             batch_Y = Y_shuffled[:,batch_size*j:batch_size*(j+1)]
             batch_Y_pred = model_obj.forward(batch_X)
 
-            cost = model_obj.cost_fn.compute_cost(batch_Y_pred, batch_Y)
+            cost = model_obj.cost_fn.compute_cost(batch_Y_pred, batch_Y, model_obj.fns, lambd)
             epoch_cost += cost
 
             model_obj.backward(batch_Y_pred, batch_Y)
@@ -101,7 +101,7 @@ class RMSProp(EWMA):
                 self.S[f"dW{i}"] = np.zeros_like(fn.weights)
                 self.S[f"dB{i}"] = np.zeros_like(fn.biases)
 
-    def run(self, X, Y, batch_size, m, learning_rate, model_obj):
+    def run(self, X, Y, batch_size, m, learning_rate, lambd, model_obj):
         epoch_cost = 0
         permutation = np.random.permutation(m)
 
@@ -114,7 +114,7 @@ class RMSProp(EWMA):
             batch_Y = Y_shuffled[:,batch_size*j:batch_size*(j+1)]
             batch_Y_pred = model_obj.forward(batch_X)
 
-            cost = model_obj.cost_fn.compute_cost(batch_Y_pred, batch_Y)
+            cost = model_obj.cost_fn.compute_cost(batch_Y_pred, batch_Y, model_obj.fns, lambd)
             epoch_cost += cost
 
             model_obj.backward(batch_Y_pred, batch_Y)
@@ -161,7 +161,7 @@ class ADAM(EWMA):
         self.t = 0
 
 
-    def run(self, X, Y, batch_size, m, learning_rate, model_obj):
+    def run(self, X, Y, batch_size, m, learning_rate, lambd, model_obj):
         epoch_cost = 0
         permutation = np.random.permutation(m)
 
@@ -174,7 +174,7 @@ class ADAM(EWMA):
             batch_Y = Y_shuffled[:,batch_size*j:batch_size*(j+1)]
             batch_Y_pred = model_obj.forward(batch_X)
 
-            cost = model_obj.cost_fn.compute_cost(batch_Y_pred, batch_Y)
+            cost = model_obj.cost_fn.compute_cost(batch_Y_pred, batch_Y, model_obj.fns, lambd)
             epoch_cost += cost
 
             model_obj.backward(batch_Y_pred, batch_Y)

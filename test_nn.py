@@ -54,7 +54,7 @@ mod.model(
     c.CrossEntropy(),
     o.RMSProp(0.8)
 )
-mod.train(X_train, Y_train, X_val, Y_val, no_epochs=250, learning_rate=0.001, batch_size=500)
+mod.train(X_train, Y_train, X_val, Y_val, no_epochs=250, learning_rate=0.001, batch_size=500, lambd=0)
 Y_test_pred = mod.predict(X_test)
 final_acc = mod.accuracy(Y_test_pred, Y_test)
 

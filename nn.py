@@ -46,10 +46,10 @@ class nn:
             res = fn.predict(res)
         return res
 
-    def backward(self, Y_pred, Y):
+    def backward(self, Y_pred, Y, lambd=0.0):
         dZ = self.dJdZ(Y_pred, Y)
         for fn in reversed(self.fns[:-1]): #first grad already calculated
-            dZ = fn.backward(dZ)
+            dZ = fn.backward(dZ,lambd=lambd)
 
     def accuracy(self, Y_pred, Y):
         predicted_labels = np.argmax(Y_pred, axis=0)
@@ -58,7 +58,7 @@ class nn:
         accuracy_val = np.mean(correct)
         return accuracy_val
 
-    def train(self, X, Y, X_val, Y_val, no_epochs=100, learning_rate=0.001, batch_size=500):
+    def train(self, X, Y, X_val, Y_val, no_epochs=100, learning_rate=0.001, batch_size=500, lambd=0.0):
         print("Training")
 
         m = X.shape[1]
@@ -66,13 +66,13 @@ class nn:
             if isinstance(self.optimiser_fn, optimisers.EWMA):
                 self.optimiser_fn._init_state(self)
 
-            epoch_cost = self.optimiser_fn.run(X, Y, batch_size, m, learning_rate, self)
+            epoch_cost = self.optimiser_fn.run(X, Y, batch_size, m, learning_rate, lambd=lambd, model_obj=self)
 
             if i % 2 == 0 or i == no_epochs - 1:
                 Y_val_pred = self.predict(X_val)
                 Y_train_pred = self.predict(X)
                 Y_train_acc = self.accuracy(Y_train_pred, Y)
-                Y_val_cost = self.cost_fn.compute_cost(Y_val_pred, Y_val)
+                Y_val_cost = self.cost_fn.compute_cost(Y_val_pred, Y_val, self.fns, lambd)
                 Y_val_acc = self.accuracy(Y_val_pred, Y_val)
                 print(f"Epoch {i}: training cost {epoch_cost}, validation cost {Y_val_cost}")
                 print(f"Validation accuracy {Y_val_acc*100:.2f}%, training Accuracy {Y_train_acc*100:.2f}%")
