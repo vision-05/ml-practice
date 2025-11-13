@@ -1,6 +1,7 @@
 import nn
 import activations as a
 import costs as c
+import optimisers as o
 import sklearn.datasets
 import numpy as np
 
@@ -42,15 +43,18 @@ Y_test = one_hot_encoder(Y_test_raw, 10)
 
 mod = nn.nn()
 mod.model(
-    a.Linear(784,128),
+    a.Linear(784,60),
     a.LeakyReLU(),
-    a.Linear(128,64),
+    a.Linear(60,40),
     a.LeakyReLU(),
-    a.Linear(64,10),
+    a.Linear(40,20),
+    a.LeakyReLU(),
+    a.Linear(20,10),
     a.softmax(),
-    c.CrossEntropy()
+    c.CrossEntropy(),
+    o.RMSProp(0.8)
 )
-mod.train(X_train, Y_train, X_val, Y_val, 250, 0.07)
+mod.train(X_train, Y_train, X_val, Y_val, no_epochs=250, learning_rate=0.001, batch_size=500)
 Y_test_pred = mod.predict(X_test)
 final_acc = mod.accuracy(Y_test_pred, Y_test)
 
@@ -60,5 +64,3 @@ def test_dimensions():
     assert mod.fns[0].weights.shape[0] == 128 and mod.fns[0].weights.shape[1] == 784
     assert mod.fns[2].weights.shape[0] == 64 and mod.fns[2].weights.shape[1] == 128
     assert mod.fns[4].biases.shape[0] == 10
-
-

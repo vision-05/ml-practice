@@ -4,6 +4,7 @@
 import numpy as np
 import activations
 import costs
+import optimisers
 
 # to add: batch gradient calculation
 # OOM from keeping too many parameters
@@ -25,6 +26,8 @@ class nn:
         for arg in args:
             if isinstance(arg, costs.Cost):
                 self.cost_fn = arg
+            elif isinstance(arg, optimisers.Optimiser):
+                self.optimiser_fn = arg
             else:
                 self.fns.append(arg)
 
@@ -55,41 +58,22 @@ class nn:
         accuracy_val = np.mean(correct)
         return accuracy_val
 
-    def train(self, X, Y, X_val, Y_val, no_epochs, learning_rate):
+    def train(self, X, Y, X_val, Y_val, no_epochs=100, learning_rate=0.001, batch_size=500):
         print("Training")
-        batch_size = 500
 
         m = X.shape[1]
         for i in range(no_epochs):
-            epoch_cost = 0
-            permutation = np.random.permutation(m)
+            if isinstance(self.optimiser_fn, optimisers.EWMA):
+                self.optimiser_fn._init_state(self)
 
-            X_shuffled = X[:, permutation]
-            Y_shuffled = Y[:, permutation]
+            epoch_cost = self.optimiser_fn.run(X, Y, batch_size, m, learning_rate, self)
 
-            no_batches = m//batch_size
-
-            for j in range(no_batches):
-                batch_X = X[:,batch_size*j:batch_size*(j+1)]
-                batch_Y = Y[:,batch_size*j:batch_size*(j+1)]
-                batch_Y_pred = self.forward(batch_X)
-
-                cost = self.cost_fn.compute_cost(batch_Y_pred, batch_Y)
-                epoch_cost += cost
-
-                self.backward(batch_Y_pred, batch_Y)
-
-                for fn in self.fns:
-                    if isinstance(fn, activations.Linear):
-                        fn.weights -= learning_rate * fn.dW
-                        fn.biases -= learning_rate * fn.dB
-
-            if i % 10 == 0 or i == no_epochs - 1:
+            if i % 2 == 0 or i == no_epochs - 1:
                 Y_val_pred = self.predict(X_val)
                 Y_train_pred = self.predict(X)
                 Y_train_acc = self.accuracy(Y_train_pred, Y)
                 Y_val_cost = self.cost_fn.compute_cost(Y_val_pred, Y_val)
                 Y_val_acc = self.accuracy(Y_val_pred, Y_val)
-                print(f"Epoch {i}: training cost {epoch_cost/no_batches}, validation cost {Y_val_cost}")
+                print(f"Epoch {i}: training cost {epoch_cost}, validation cost {Y_val_cost}")
                 print(f"Validation accuracy {Y_val_acc*100:.2f}%, training Accuracy {Y_train_acc*100:.2f}%")
 
